@@ -85,41 +85,32 @@ describe('PostController (e2e)', () => {
     );
   });
 
-  it('full flow: create -> get -> update -> delete', async () => {
-    const created = await request(app.getHttpServer())
-      .post('/posts')
-      .send({ title: 't2', content: 'c2', authorId: 2 })
-      .expect(201);
+  it('게시글을 생성·조회·수정·삭제할 수 있다.', async () => {
+    // given
+    const createPayload = createPostDto();
+    const updatePayload = { title: faker.book.title() };
 
-    const id = created.body.id as number;
-
-    const fetched = await request(app.getHttpServer())
-      .get(`/posts/${id}`)
+    // when
+    const created = await writePost(httpServer, createPayload);
+    const postId = created.id;
+    const fetched = await httpServer.get(`/posts/${postId}`).expect(200);
+    const updated = await httpServer
+      .put(`/posts/${postId}`)
+      .send(updatePayload)
       .expect(200);
-    expect(fetched.body).toMatchObject({
-      id,
-      title: 't2',
-      content: 'c2',
-      authorId: 2,
-    });
+    await httpServer.delete(`/posts/${postId}`).expect(200);
+    const listResponse = await httpServer.get('/posts').expect(200);
 
-    const updated = await request(app.getHttpServer())
-      .put(`/posts/${id}`)
-      .send({ title: 't2-upd' })
-      .expect(200);
+    // then
+    expect(fetched.body).toMatchObject({ id: postId, ...createPayload });
     expect(updated.body).toMatchObject({
-      id,
-      title: 't2-upd',
-      content: 'c2',
-      authorId: 2,
+      id: postId,
+      ...createPayload,
+      ...updatePayload,
     });
-
-    await request(app.getHttpServer()).delete(`/posts/${id}`).expect(200);
-
-    const afterDelete = await request(app.getHttpServer())
-      .get('/posts')
-      .expect(200);
-    expect(afterDelete.body.some((p: any) => p.id === id)).toBe(false);
+    expect(
+      listResponse.body.some((post: { id: number }) => post.id === postId),
+    ).toBe(false);
   });
 
   afterAll(async () => {
