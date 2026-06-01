@@ -71,6 +71,20 @@ describe('PostController (e2e)', () => {
     expect(response.body).toEqual(expect.objectContaining(payload));
   });
 
+  it('게시글을 삭제할 수 있다. DELETE /posts/:id', async () => {
+    // given
+    const postId = (await writePost(httpServer, createPostDto())).id;
+
+    // when
+    await httpServer.delete(`/posts/${postId}`).expect(200);
+
+    // then
+    const listResponse = await httpServer.get('/posts').expect(200);
+    expect(listResponse.body.some((post: { id: number }) => post.id === postId)).toBe(
+      false,
+    );
+  });
+
   it('full flow: create -> get -> update -> delete', async () => {
     const created = await request(app.getHttpServer())
       .post('/posts')
