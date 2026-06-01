@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { CreatePostDto } from '../src/post/dto/create-post.dto';
-import { PostModule } from '../src/post/post.module';
 import { faker } from '@faker-js/faker/locale/ko';
+import { CreatePostDto } from '../../../src/post/dto/create-post.dto';
+import { PostModule } from '../../../src/post/post.module';
 
 describe('PostController (e2e)', () => {
   let app: INestApplication<App>;
@@ -57,14 +57,17 @@ describe('PostController (e2e)', () => {
 
   it('게시글을 수정할 수 잇다. PUT /posts/:id', async () => {
     // given
-    const postId = (await writePost(httpServer,createPostDto())).id;
+    const postId = (await writePost(httpServer, createPostDto())).id;
     const payload = {
       title: faker.book.title(),
       content: faker.lorem.lines({ min: 1, max: 4 }),
     };
 
     // when
-    const response = await httpServer.put(`/posts/${postId}`).send(payload).expect(200);
+    const response = await httpServer
+      .put(`/posts/${postId}`)
+      .send(payload)
+      .expect(200);
 
     //then
     expect(response.body).toMatchObject(payload);
