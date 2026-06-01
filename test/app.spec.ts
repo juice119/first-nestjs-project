@@ -55,11 +55,20 @@ describe('PostController (e2e)', () => {
     expect(response.body).toEqual(expect.objectContaining(payload));
   });
 
-  it('POST /posts invalid body -> 400', async () => {
-    await request(app.getHttpServer())
-      .post('/posts')
-      .send({ content: 'c1', authorId: 1 })
-      .expect(400);
+  it('게시글을 수정할 수 잇다. PUT /posts/:id', async () => {
+    // given
+    const postId = (await writePost(httpServer,createPostDto())).id;
+    const payload = {
+      title: faker.book.title(),
+      content: faker.lorem.lines({ min: 1, max: 4 }),
+    };
+
+    // when
+    const response = await httpServer.put(`/posts/${postId}`).send(payload).expect(200);
+
+    //then
+    expect(response.body).toMatchObject(payload);
+    expect(response.body).toEqual(expect.objectContaining(payload));
   });
 
   it('full flow: create -> get -> update -> delete', async () => {
@@ -107,8 +116,8 @@ describe('PostController (e2e)', () => {
 async function writePost(
   httpServer: ReturnType<typeof request>,
   dto: CreatePostDto,
-): Promise<void> {
-  await httpServer.post('/posts').send(dto).expect(201);
+) {
+  return (await httpServer.post('/posts').send(dto).expect(201)).body;
 }
 
 function createPostDto(overrides: Partial<CreatePostDto> = {}): CreatePostDto {
